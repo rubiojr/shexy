@@ -32,7 +32,7 @@ require 'net/scp'
 #
 module Shexy
 
-  VERSION = '0.1'
+  VERSION = '0.2'
 
   @flags = {}
 
@@ -40,7 +40,7 @@ module Shexy
   def self.password; flags[:password]; end
   def self.key=(key); flags[:keys] = [File.expand_path(key)]; end
   def self.key; flags[:keys]; end
-  def self.use_sudo; @sudo = true; end
+  def self.use_sudo(v=true); @sudo = v; end
   def self.sudo?; @sudo ||= false; end
 
   class << self
@@ -70,17 +70,25 @@ module Shexy
           # to implement access to stdout,stderr this way
           stdout = ""
           stderr = ""
+          exit_code = -1
+          exit_signal = -1
           ch.on_extended_data do |c2, type, data|
             # ERROR output here
             stderr << data
-            yield stdout, stderr if block_given?
+            yield nil, data if block_given?
           end
           ch.on_data do |c2, data|
             stdout << data
-            yield stdout, stderr if block_given?
+            yield data, nil if block_given?
           end
           ch.on_close do |c2|
-            return stdout, stderr
+            return stdout, stderr, exit_code, exit_signal
+          end
+          ch.on_request("exit-status") do |c2,data|
+            exit_code = data.read_long
+          end
+          ch.on_request("exit-signal") do |c2, data|
+            exit_signal = data.read_long
           end
         end
       end
@@ -97,6 +105,12 @@ module Shexy
   # Shexy.copy_to 'source_file', 'dest_file'
   # 
   def self.copy_to(*args)
+    opts = {}
+    if args.include?(:recursive)
+      opts = { :recursive => true }
+      args.delete :recursive
+    end
+    
     if args.size > 2
       # First arg assumed to be foo@host.net
       @host = args[0]
@@ -113,7 +127,7 @@ module Shexy
     end
     from = File.expand_path from
     Net::SCP.start(host, user, flags) do |scp|
-      scp.upload! from, to
+      scp.upload! from, to, opts
     end
   end
 
