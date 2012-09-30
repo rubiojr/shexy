@@ -30,40 +30,75 @@ require 'net/scp'
 #
 #     Shexy.copy_to 'test@test-host', '/home/rubiojr/my-uber-file', '/tmp/'
 #
+
 module Shexy
+    
+  VERSION = '0.3'
 
-  VERSION = '0.2'
+  [:user, :password, :key, :cmd, :host, :use_sudo].each do |n|
+    instance_eval %{
+      def #{n}; Thread.current[:shexy_#{n}]; end
+      def #{n}=(v); Thread.current[:shexy_#{n}] = v; end
+    }
+  end
 
-  @flags = {}
+  def self.flags=(f);Thread.current[:shexy_flags] = f;end
+  def self.flags; Thread.current[:shexy_flags] ||= {} ; end
+  def self.sudo?;Thread.current[:shexy_use_sudo]; end
 
-  def self.password=(password); flags[:password] = password; end
-  def self.password; flags[:password]; end
-  def self.key=(key); flags[:keys] = [File.expand_path(key)]; end
-  def self.key; flags[:keys]; end
-  def self.use_sudo(v=true); @sudo = v; end
-  def self.sudo?; @sudo ||= false; end
+  def self.wait_for_ssh(timeout = 60)
+    Timeout.timeout(timeout) do
+      begin
+        sleep(1) until tcp_test_ssh(host) do
+        end
+      rescue Errno::ECONNRESET
+        # safe to ignore, we need to retry all the time.
+      end
+    end
+    true
+  rescue Exception => e
+    $stderr.puts e.message
+    false
+  end
 
-  class << self
-    attr_accessor :host, :user, :flags
-    attr_reader :cmd
+  def self.tcp_test_ssh
+    tcp_socket = TCPSocket.new(host, 22)
+    readable = IO.select([tcp_socket], nil, nil, 5)
+    if readable
+      yield
+      true
+    else
+      false
+    end
+  rescue Errno::ETIMEDOUT, Errno::EPERM
+    false
+  rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ENETUNREACH
+    sleep 2
+    false
+  ensure
+    tcp_socket && tcp_socket.close
   end
 
   def self.exe(*args)
     args.flatten!
     if args.size > 1
-      @host = args[0]
-      if @host =~ /@/
-        @user, @host = @host.split '@'
-      end
-      @cmd = args[1]
+      self.host = args[0]
+      self.user, self.host = self.host.split '@' if self.host =~ /@/
+      self.cmd = args[1]
     else
-      @cmd = args[0]
+      self.cmd = args[0]
     end
-    Net::SSH.start(host, user, flags) do |sh|
+    flags[:password] = self.password if self.password
+    flags[:keys] = [self.key] if self.key
+    Net::SSH.start(self.host, self.user, self.flags) do |sh|
       sh.open_channel do |ch| 
         if sudo?
           ch.request_pty 
-          @cmd = "sudo #{@cmd}"
+          if cmd =~ /(&&|\|\||&|\|)/
+            self.cmd = cmd.gsub(/(&&|\|\||&|\|)/, $1 + 'sudo')
+          end
+          self.cmd = "sudo #{cmd}"
+          puts "SHEXY: #{cmd}" if $DEBUG
         end
         ch.exec cmd do
           # FIXME: I don't think it's a good idea
@@ -95,6 +130,25 @@ module Shexy
     end
   end
 
+  def self.batch(&block)
+    require 'tempfile'
+    out, err = nil,nil
+    def self.script(script)
+      f = Tempfile.new 'shexy'
+      begin
+        f.puts script 
+        f.flush
+        copy_to f.path, "#{f.path}.remote"
+        out, err = exe "/bin/bash #{f.path}.remote" 
+      ensure
+        f.close
+        f.unlink
+      end
+      return out, err
+    end
+    instance_eval &block
+  end
+
   #
   # Shexy.copy_to 'root@foobar.com', 'source_file', 'dest_file'
   #
@@ -113,9 +167,9 @@ module Shexy
     
     if args.size > 2
       # First arg assumed to be foo@host.net
-      @host = args[0]
-      if @host =~ /@/
-        @user, @host = @host.split '@'
+      self.host = args[0]
+      if self.host =~ /@/
+        self.user, self.host = self.host.split '@'
       end
       from = args[1]
       to = args[2]
