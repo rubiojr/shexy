@@ -88,8 +88,8 @@ module Shexy
     else
       self.cmd = args[0]
     end
-    flags[:password] = self.password if self.password
-    flags[:keys] = [self.key] if self.key
+    self.flags[:password] = self.password if self.password
+    self.flags[:keys] = [self.key] if self.key
     Net::SSH.start(self.host, self.user, self.flags) do |sh|
       sh.open_channel do |ch| 
         if sudo?
