@@ -2,6 +2,10 @@
 
 SSH, the way I like it.
 
+## Install
+
+    gem install shexy
+
 ## Do it 
 
     require 'shexy'
