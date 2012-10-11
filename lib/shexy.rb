@@ -33,7 +33,7 @@ require 'net/scp'
 
 module Shexy
     
-  VERSION = '0.3'
+  VERSION = '0.3.1'
 
   [:user, :password, :key, :cmd, :host].each do |n|
     instance_eval %{
@@ -242,11 +242,12 @@ module Shexy
     unless value =~ /^(yes|no|without-password)$/
       raise ArgumentError.new "Argument should be yes|no|without-password"
     end
+
     using_sudo = Shexy.sudo?
-    Shexy.use_sudo 
+    Shexy.use_sudo unless Shexy.user == 'root'
     out, err = batch do
       script <<-EOH
-      sed -i 's/^#\?PermitRootLogin.*$/PermitRootLogin\ #{value}/' /etc/ssh/sshd_config
+      sed -i 's/^#\\?PermitRootLogin.*$/PermitRootLogin\\ #{value}/' /etc/ssh/sshd_config
       test -f /etc/init.d/ssh && /etc/init.d/ssh restart
       test -f /etc/init.d/sshd && /etc/init.d/sshd restart
       EOH
