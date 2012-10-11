@@ -179,6 +179,7 @@ module Shexy
       from = args[0]
       to = args[1]
     end
+    self.flags[:password] = self.password if self.password
     from = File.expand_path from
     Net::SCP.start(host, user, flags) do |scp|
       scp.upload! from, to, opts
