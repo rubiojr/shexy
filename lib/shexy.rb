@@ -219,4 +219,16 @@ module Shexy
     issue
   end
 
+  def self.copy_ssh_pubkey(path, dest_dir = '~/.ssh')
+    path = File.expand_path path
+    raise ArgumentError.new("Invalid key file") unless File.exist?(path)
+    key = File.read path
+    batch do
+      script <<-EOH
+      mkdir -p #{dest_dir} && chmod 700 #{dest_dir}
+      echo '#{key}' >> #{dest_dir}/authorized_keys
+      EOH
+    end
+  end
+
 end
