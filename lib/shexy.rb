@@ -232,4 +232,20 @@ module Shexy
     end
   end
 
+  #
+  # Set PermitRootLogin to value in /etc/ssh/sshd_config
+  # value accepted: yes,now, without-password
+  #
+  def self.permit_root_login(value)
+    value = value.to_s
+    unless value =~ /^(yes|no|without-password)$/
+      raise ArgumentError.new "Argument should be yes|no|without-password"
+    end
+    using_sudo = Shexy.sudo?
+    Shexy.use_sudo = true 
+    out, err, ecode = exe "sed -i 's/^PermitRootLogin.*$/PermitRootLogin\ #{value}/' /etc/ssh/sshd_config"
+    Shexy.use_sudo = false unless using_sudo
+    ecode == 0
+  end
+
 end
