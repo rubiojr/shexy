@@ -35,7 +35,7 @@ module Shexy
     
   VERSION = '0.3'
 
-  [:user, :password, :key, :cmd, :host, :use_sudo].each do |n|
+  [:user, :password, :key, :cmd, :host].each do |n|
     instance_eval %{
       def #{n}; Thread.current[:shexy_#{n}]; end
       def #{n}=(v); Thread.current[:shexy_#{n}] = v; end
@@ -45,6 +45,7 @@ module Shexy
   def self.flags=(f);Thread.current[:shexy_flags] = f;end
   def self.flags; Thread.current[:shexy_flags] ||= {} ; end
   def self.sudo?;Thread.current[:shexy_use_sudo]; end
+  def self.use_sudo(v = true); Thread.current[:shexy_use_sudo] = v; end
 
   def self.wait_for_ssh(timeout = 60)
     Timeout.timeout(timeout) do
@@ -242,10 +243,16 @@ module Shexy
       raise ArgumentError.new "Argument should be yes|no|without-password"
     end
     using_sudo = Shexy.sudo?
-    Shexy.use_sudo = true 
-    out, err, ecode = exe "sed -i 's/^PermitRootLogin.*$/PermitRootLogin\ #{value}/' /etc/ssh/sshd_config"
-    Shexy.use_sudo = false unless using_sudo
-    ecode == 0
+    Shexy.use_sudo 
+    out, err = batch do
+      script <<-EOH
+      sed -i 's/^PermitRootLogin.*$/PermitRootLogin\ #{value}/' /etc/ssh/sshd_config
+      test -f /etc/init.d/ssh && /etc/init.d/ssh restart
+      test -f /etc/init.d/sshd && /etc/init.d/sshd restart
+      EOH
+    end
+    Shexy.use_sudo(false) unless using_sudo
+    return out, err
   end
 
 end
