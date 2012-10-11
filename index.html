@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <title>Shexy by rubiojr</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Shexy</h1>
+        <h2>SSH, the way I like it</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/rubiojr/shexy/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/rubiojr/shexy/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/rubiojr/shexy" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>Shexy</h1>
+
+<p>SSH, the way I like it.</p>
+
+<h2>Do it</h2>
+
+<pre><code>require 'shexy'
+
+Shexy.user = 'test'
+Shexy.password = 'test'
+Shexy.host = 'test-host'
+out, err = Shexy.exe 'ls -la'
+out.empty? # no output
+err.empty? # no error output
+
+Shexy.exe 'la -la' do |out,err|
+  puts out
+  puts err
+end
+</code></pre>
+
+<p>Another way, assuming you are using SSH keys 
+and added them to the SSH agent (ssh-add ~/.ssh/my-priv-key):</p>
+
+<pre><code>Shexy.exe 'test@test-host', 'ls -la' do |out, err|
+  puts out
+end
+Shexy.exe 'echo hello' # no need to add host/user again
+</code></pre>
+
+<p>Specify key to use:</p>
+
+<pre><code>Shexy.key = '~/.ssh/id_rsa'
+out, err, exit_code = Shexy.exe 'test@test-host', 'ls -la'
+</code></pre>
+
+<p>Copying files (local -&gt; remote):</p>
+
+<pre><code>Shexy.copy_to 'test@test-host', '/home/rubiojr/my-uber-file', '/tmp/'
+</code></pre>
+
+<p>Batch mode:</p>
+
+<pre><code>Shexy.batch do
+  script &lt;&lt;-EOH
+    echo &gt; /tmp/foo
+    ls -la
+    sed -i s/foo/bar/ /etc/foo
+  EOH
+end
+</code></pre>
+
+<p>Use sudo:</p>
+
+<pre><code> Shexy.use_sudo
+ # sudo will be used to run the commands
+ Shexy.exe 'test@foobar.com', 'echo | cat' # =&gt; sudo echo | sudo cat
+</code></pre>
+
+<p>Query the server OS:</p>
+
+<pre><code> Shexy.distro          # =&gt; :ubuntu, :redhat, :centos, :fedora, :debian
+ Shexy.distro_release  # =&gt; 12.04, 5.8, etc.
+</code></pre>
+
+<p>More helpers:</p>
+
+<pre><code> Shexy.user = 'rubiojr'
+ Shexy.password = 'secret'
+ Shexy.host = 'foo.com'
+ # Copy the key to /home/rubiojr/.ssh/authorized_keys in remote server
+ Shexy.copy_ssh_pubkey '~/.ssh/id_rsa.pub'
+ # Set PermitRootLogin to without-password in /etc/ssh/sshd_config
+ # requires sudo in remote server (unless using root user).
+ Shexy.permit_root_login 'without-password'
+</code></pre>
+
+<h2>Caution</h2>
+
+<p>I was bored writing net-ssh boilerplate, so I created this highly 
+experimental sh*t (a small amount of it, but experimental).</p>
+
+<h2>Copyright</h2>
+
+<p>Copyright (c) 2012 Sergio Rubio. See LICENSE.txt for
+further details.</p>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
