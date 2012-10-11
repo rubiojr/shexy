@@ -246,7 +246,7 @@ module Shexy
     Shexy.use_sudo 
     out, err = batch do
       script <<-EOH
-      sed -i 's/^PermitRootLogin.*$/PermitRootLogin\ #{value}/' /etc/ssh/sshd_config
+      sed -i 's/^#\?PermitRootLogin.*$/PermitRootLogin\ #{value}/' /etc/ssh/sshd_config
       test -f /etc/init.d/ssh && /etc/init.d/ssh restart
       test -f /etc/init.d/sshd && /etc/init.d/sshd restart
       EOH
