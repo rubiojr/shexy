@@ -18,7 +18,7 @@ Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
   gem.version = Shexy::VERSION
   gem.name = "shexy"
-  gem.homepage = "http://github.com/rubiojr/shexy"
+  gem.homepage = "http://rubiojr.github.com/shexy"
   gem.license = "MIT"
   gem.summary = %Q{SSH, the way I like it}
   gem.description = %Q{[extremely] thin wrapper around net-ssh and net-scp}
