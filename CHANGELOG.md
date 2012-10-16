@@ -1,3 +1,7 @@
+# 0.3.2
+
+* Fix Shexy.wait_for_ssh
+
 # 0.3.1
 
 * Bug fixes
