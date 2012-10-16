@@ -33,7 +33,7 @@ require 'net/scp'
 
 module Shexy
     
-  VERSION = '0.3.1'
+  VERSION = '0.3.2'
 
   [:user, :password, :key, :cmd, :host].each do |n|
     instance_eval %{
@@ -50,7 +50,7 @@ module Shexy
   def self.wait_for_ssh(timeout = 60)
     Timeout.timeout(timeout) do
       begin
-        sleep(1) until tcp_test_ssh(host) do
+        sleep(1) until tcp_test_ssh do
         end
       rescue Errno::ECONNRESET
         # safe to ignore, we need to retry all the time.
