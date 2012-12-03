@@ -33,7 +33,7 @@ require 'net/scp'
 
 module Shexy
     
-  VERSION = '0.3.2'
+  VERSION = '0.3.3'
 
   [:user, :password, :key, :cmd, :host].each do |n|
     instance_eval %{
@@ -93,8 +93,16 @@ module Shexy
     self.flags[:keys] = [self.key] if self.key
     Net::SSH.start(self.host, self.user, self.flags) do |sh|
       sh.open_channel do |ch| 
+        #
+        # Note, too, that when a pty is requested, user's shell configuration 
+        # scripts (.bashrc and such) are not run by default, 
+        # whereas they are run when a pty is not present.
+        #
+        # http://net-ssh.github.com/net-ssh/classes/Net/SSH/Connection/Channel.html#method-i-request_pty
+        #
+        # FIXME: may not be successful, warn about it
+        ch.request_pty 
         if sudo?
-          ch.request_pty 
           if cmd =~ /(&&|\|\||&|\|)/
             self.cmd = cmd.gsub(/(&&|\|\||&|\|)/, $1 + 'sudo')
           end
