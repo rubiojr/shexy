@@ -1,0 +1,19 @@
+Source: ruby-shexy
+Section: ruby
+Priority: optional
+Maintainer: Debian Ruby Extras Maintainers <pkg-ruby-extras-maintainers@lists.alioth.debian.org>
+Uploaders: Sergio Rubio <rubiojr@frameos.org>
+DM-Upload-Allowed: yes
+Build-Depends: debhelper (>= 7.0.50~), gem2deb (>= 0.2.0~)
+Standards-Version: 3.9.3
+#Vcs-Git: git://git.debian.org/pkg-ruby-extras/ruby-shexy.git
+#Vcs-Browser: http://git.debian.org/?p=pkg-ruby-extras/ruby-shexy.git;a=summary
+Homepage: http://rubiojr.github.com/shexy
+XS-Ruby-Versions: all
+
+Package: ruby-shexy
+Architecture: all
+XB-Ruby-Versions: ${ruby:Versions}
+Depends: ${shlibs:Depends}, ${misc:Depends}, ruby | ruby-interpreter, ruby-net-scp
+Description: SSH, the way I like it
+ [extremely] thin wrapper around net-ssh and net-scp
