@@ -33,7 +33,7 @@ require 'net/scp'
 
 module Shexy
     
-  VERSION = '0.3.3'
+  VERSION = '0.3.4'
 
   [:user, :password, :key, :cmd, :host].each do |n|
     instance_eval %{
@@ -103,8 +103,12 @@ module Shexy
         # FIXME: may not be successful, warn about it
         ch.request_pty 
         if sudo?
-          if cmd =~ /(&&|\|\||&|\|)/
-            self.cmd = cmd.gsub(/(&&|\|\||&|\|)/, $1 + 'sudo')
+          regexp = /(&&|\|\||&|\|)/
+          if cmd =~ regexp
+            new_cmd = cmd.split(regexp).map do |t| 
+              t =~ /^(&&|\|\||&|\|)$/ ? t : "sudo #{t}"
+            end
+            self.cmd = new_cmd.join ''
           end
           self.cmd = "sudo #{cmd}"
           puts "SHEXY: #{cmd}" if $DEBUG
