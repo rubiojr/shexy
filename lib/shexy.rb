@@ -33,7 +33,7 @@ require 'net/scp'
 
 module Shexy
     
-  VERSION = '0.3.4'
+  VERSION = '0.3.5'
 
   [:user, :password, :key, :cmd, :host].each do |n|
     instance_eval %{
@@ -145,19 +145,18 @@ module Shexy
 
   def self.batch(&block)
     require 'tempfile'
-    out, err = nil,nil
     def self.script(script)
       f = Tempfile.new 'shexy'
       begin
         f.puts script 
         f.flush
         copy_to f.path, "#{f.path}.remote"
-        out, err = exe "/bin/bash #{f.path}.remote" 
+        out, err, ecode, esig = exe "/bin/bash #{f.path}.remote" 
       ensure
         f.close
         f.unlink
       end
-      return out, err
+      return out, err, ecode, esig
     end
     instance_eval &block
   end
