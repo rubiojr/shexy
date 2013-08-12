@@ -35,7 +35,7 @@ module Shexy
     
   VERSION = '0.3.5'
 
-  [:user, :password, :key, :cmd, :host].each do |n|
+  [:user, :password, :key, :cmd, :host, :port].each do |n|
     instance_eval %{
       def #{n}; Thread.current[:shexy_#{n}]; end
       def #{n}=(v); Thread.current[:shexy_#{n}] = v; end
@@ -91,6 +91,7 @@ module Shexy
     end
     self.flags[:password] = self.password if self.password
     self.flags[:keys] = [self.key] if self.key
+    self.flags[:port] = self.port if self.port
     Net::SSH.start(self.host, self.user, self.flags) do |sh|
       sh.open_channel do |ch| 
         #
@@ -192,6 +193,8 @@ module Shexy
       to = args[1]
     end
     self.flags[:password] = self.password if self.password
+    self.flags[:keys] = [self.key] if self.key
+    self.flags[:port] = self.port if self.port
     from = File.expand_path from
     Net::SCP.start(host, user, flags) do |scp|
       scp.upload! from, to, opts
